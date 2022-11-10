@@ -25,15 +25,16 @@ typedef struct {
 #define NO_TASK_ID 0
 sTask SCH_tasks_G[SCH_MAX_TASKS] ;
 
+extern int current_index_task;
 
 void SCH_Init(void);
 
-void SCH_Add_Task ( void (*pFunction)() ,
-					uint32_t DELAY,
-					uint32_t PERIOD);
+void SCH_Add_Task( void (* pFunction) () , unsigned int DELAY, unsigned int PERIOD);
 
 void SCH_Update(void);
 
 void SCH_Dispatch_Tasks(void);
+
+void SCH_Delete_Task( int TASK_INDEX);
 
 #endif /* INC_SCH_H_ */

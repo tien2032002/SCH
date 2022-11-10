@@ -4,6 +4,9 @@
  *  Created on: Nov 9, 2022
  *      Author: Administrator
  */
+#include "main.h"
+#include "sch.h"
+
 sTask SCH_tasks_G[SCH_MAX_TASKS];
 
 void SCH_Init ( void ) {
@@ -14,42 +17,76 @@ void SCH_Init ( void ) {
 	// Reset the global error variable
 	// − SCH_Delete_Task () w ill generate an error code ,
 	// ( because the task array i s empty)
-	Error_code_G = 0;
-	Timer_init () ;
-	Watchdog_init () ;
 }
 
-void SCH_Add_Task ( void (*pFunction)() , uint32_t DELAY, uint32_t PERIOD){
-	if(current_index_task < SCH_MAX_TASKS){
-
-		SCH_tasks_G[current_index_task].pTask = pFunction;
-		SCH_tasks_G[current_index_task].Delay = DELAY;
-		SCH_tasks_G[current_index_task].Period =  PERIOD;
-		SCH_tasks_G[current_index_task].RunMe = 0;
-
-		SCH_tasks_G[current_index_task].TaskID = current_index_task;
-
-
-		current_index_task++;
+/*−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−*−
+SCH_Add_Task () Causes a task ( function ) to be executed at regular inter val s
+or aft e r a user−defined delay
+−*−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−*/
+void SCH_Add_Task( void (* pFunction) () , unsigned int DELAY, unsigned int PERIOD) {
+	unsigned char Index = 0;
+	// F i r st find a gap in the array ( i f there i s one)
+	while (( SCH_tasks_G[ Index ] . pTask != 0) && ( Index < SCH_MAX_TASKS) ) {
+		Index++;
 	}
-}
+	// Have we reached the end of the l i s t ?
+		if ( Index == SCH_MAX_TASKS) {
+			// Task list is full
+			// Also return an error code
+			return ;
+		}
+		//If we’re here , there is a space in the task array
+		SCH_tasks_G[ Index ].pTask = pFunction ;
+		SCH_tasks_G[ Index ].Delay = DELAY;
+		SCH_tasks_G[ Index ].Period = PERIOD;
+		SCH_tasks_G[ Index ].RunMe = 0;
+		// return position of task ( to allow later deletion )
+	}
 
-void SCH_Update(void){
-	for(int i = 0; i < current_index_task; i++){
-		if (SCH_tasks_G[i].Delay > 0){
-			SCH_tasks_G[i].Delay --;
-		}else{
-			SCH_tasks_G[i].Delay = SCH_tasks_G[i].Period;
-			SCH_tasks_G[i].RunMe += 1;
+void SCH_Update( void ) {
+	unsigned char Index ;
+	// NOTE: calculations are in *TICKS* ( not milliseconds )
+	for ( Index = 0; Index < SCH_MAX_TASKS; Index++) {
+		// Check if there is a task at this location
+		if ( SCH_tasks_G[ Index ].pTask) {
+			if ( SCH_tasks_G[ Index ].Delay == 0) {
+				// The task i s due to run
+				// Inc . the ’RunMe’ fl a g
+				SCH_tasks_G[ Index ].RunMe += 1;
+				if ( SCH_tasks_G[ Index ].Period ) {
+					// Schedule periodic tasks to run again
+					SCH_tasks_G[ Index ].Delay = SCH_tasks_G[ Index ].Period ;
+				}
+			}
+			else {
+			// Not yet ready to run : ju st decrement the delay
+			SCH_tasks_G[ Index ].Delay -- ;
+			}
 		}
 	}
 }
 
-void SCH_Dispatch_Tasks(void){
-	for(int i = 0; i < current_index_task; i++){
-		if(SCH_tasks_G[i].RunMe > 0){
-			SCH_tasks_G[i].RunMe--;
-			(*SCH_tasks_G[i].pTask)();
+void SCH_Dispatch_Tasks( void ) {
+	unsigned char Index ;
+	// Dispatches ( runs ) the next task ( i f one i s ready )
+	for ( Index = 0; Index < SCH_MAX_TASKS; Index++) {
+		if ( SCH_tasks_G[ Index ].RunMe > 0) {
+			(* SCH_tasks_G[ Index ].pTask) () ; // Run the task
+			SCH_tasks_G[ Index ].RunMe--; // Reset / reduce RunMe fl a g
+			// Periodic tasks w ill automatically run again
+			// − i f thi s i s a ’one shot ’ task , remove i t from the array
+			if ( SCH_tasks_G[ Index ] . Period == 0)
+			{
+				SCH_Delete_Task( Index ) ;
+			}
 		}
 	}
+}
+
+/*−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−*/
+void SCH_Delete_Task( int TASK_INDEX) {
+	SCH_tasks_G[TASK_INDEX ] . pTask = 0x0000 ;
+	SCH_tasks_G[TASK_INDEX ] . Delay = 0;
+	SCH_tasks_G[TASK_INDEX ] . Period = 0;
+	SCH_tasks_G[TASK_INDEX ] .RunMe = 0;
 }
