@@ -23,7 +23,7 @@ typedef struct {
 // MUST BE ADJUSTED FOR EACH NEW PROJECT
 #define SCH_MAX_TASKS 40
 #define NO_TASK_ID 0
-sTask SCH_tasks_G[SCH_MAX_TASKS] ;
+extern sTask SCH_tasks_G[SCH_MAX_TASKS] ;
 
 extern int current_index_task;
 
