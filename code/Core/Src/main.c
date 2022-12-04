@@ -151,14 +151,14 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
-  SCH_Add_Task(blinking_led, 1, 0);
+  SCH_Add_Task(blinking_led, 1, 0);//one shot task
   SCH_Add_Task(blinking_led1, 2, 50);
   SCH_Add_Task(blinking_led2, 3, 100);
   SCH_Add_Task(blinking_led3, 4, 150);
   SCH_Add_Task(blinking_led4, 5, 200);
   SCH_Add_Task(blinking_led5, 6, 250);
-  SCH_Add_Task(blinking_led6, 7, 1);
-  SCH_Add_Task(button_reading, 8, 1);
+  SCH_Add_Task(blinking_led6, 7, 1);//button
+  SCH_Add_Task(button_reading, 8, 1);//button
   /* USER CODE END 2 */
 
   /* Infinite loop */
