@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "sch.h"
 #include "stdio.h"
+#include "button.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,49 +57,65 @@ static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
-void* blinking_led(void);
-void* blinking_led1(void);
-void* blinking_led2(void);
-void* blinking_led3(void);
-void* blinking_led4(void);
+void blinking_led(void);
+void blinking_led1(void);
+void blinking_led2(void);
+void blinking_led3(void);
+void blinking_led4(void);
+void blinking_led5(void);
+void blinking_led6(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void* blinking_led() {
+void blinking_led() {
 	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 	char str[50];
 	HAL_UART_Transmit(&huart2, str, sprintf(str, "%d%s", counter, ": Task 0 dispatch\r\n"), 1000);
 
-	return (void*)NULL;
 }
 
-void* blinking_led1() {
+void blinking_led1() {
 	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 	char str[50];
 	HAL_UART_Transmit(&huart2, str, sprintf(str, "%d%s", counter, ": Task 1 dispatch\r\n"), 1000);
-	return (void*)NULL;
 }
 
-void* blinking_led2() {
+void blinking_led2() {
 	HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
 	char str[50];
 	HAL_UART_Transmit(&huart2, str, sprintf(str, "%d%s", counter, ": Task 2 dispatch\r\n"), 1000);
-	return (void*)NULL;
+
 }
 
-void* blinking_led3() {
+void blinking_led3() {
 	char str[50];
 	HAL_UART_Transmit(&huart2, str, sprintf(str, "%d%s", counter, ": Task 3 dispatch\r\n"), 1000);
 	HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
-	return (void*)NULL;
+
 }
 
-void* blinking_led4() {
+void blinking_led4() {
 	char str[50];
 	HAL_UART_Transmit(&huart2, str, sprintf(str, "%d%s", counter, ": Task 4 dispatch\r\n"), 1000);
 	HAL_GPIO_TogglePin(LED4_GPIO_Port, LED4_Pin);
-	return (void*)NULL;
+
+}
+void blinking_led5() {
+	char str[50];
+	HAL_UART_Transmit(&huart2, str, sprintf(str, "%d%s", counter, ": Task 5 dispatch\r\n"), 1000);
+	HAL_GPIO_TogglePin(LED5_GPIO_Port, LED5_Pin);
+
+}
+void blinking_led6() {
+	char str[50];
+	if (flagForButtonPress[0]==1) {
+		HAL_UART_Transmit(&huart2, str, sprintf(str, "%d%s", counter, ": Task 6 dispatch\r\n"), 1000);
+		HAL_GPIO_TogglePin(LED6_GPIO_Port, LED6_Pin);
+		flagForButtonPress[0]=0;
+	}
+
+
 }
 /* USER CODE END 0 */
 
@@ -134,11 +151,14 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
-  SCH_Add_Task((void*)blinking_led, 0, 0);
-  SCH_Add_Task((void*)blinking_led1, 1, 99);
-  SCH_Add_Task((void*)blinking_led2, 2, 149);
-  SCH_Add_Task((void*)blinking_led3, 3, 199);
-  SCH_Add_Task((void*)blinking_led4, 4, 249);
+  SCH_Add_Task(blinking_led, 1, 0);
+  SCH_Add_Task(blinking_led1, 2, 50);
+  SCH_Add_Task(blinking_led2, 3, 100);
+  SCH_Add_Task(blinking_led3, 4, 150);
+  SCH_Add_Task(blinking_led4, 5, 200);
+  SCH_Add_Task(blinking_led5, 6, 250);
+  SCH_Add_Task(blinking_led6, 7, 1);
+  SCH_Add_Task(button_reading, 8, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -277,16 +297,23 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, LED_Pin|LED1_Pin|LED2_Pin|LED3_Pin
-                          |LED4_Pin, GPIO_PIN_RESET);
+                          |LED4_Pin|LED5_Pin|LED6_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : BUTTON_Pin */
+  GPIO_InitStruct.Pin = BUTTON_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(BUTTON_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LED_Pin LED1_Pin LED2_Pin LED3_Pin
-                           LED4_Pin */
+                           LED4_Pin LED5_Pin LED6_Pin */
   GPIO_InitStruct.Pin = LED_Pin|LED1_Pin|LED2_Pin|LED3_Pin
-                          |LED4_Pin;
+                          |LED4_Pin|LED5_Pin|LED6_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
